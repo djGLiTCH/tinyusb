@@ -1880,19 +1880,6 @@ static void enum_new_device(hcd_event_t *event) {
   dev0_bus->rhport         = event->rhport;
   dev0_bus->hub_addr       = event->connection.hub_addr;
   dev0_bus->hub_port       = event->connection.hub_port;
-  #if CFG_TUH_RPI_PIO_USB
-  if (dev0_bus->hub_addr == 0) {
-    // Pico-PIO-USB keeps a newly connected root port silent (no reset, no SOF)
-    // until it is reset, so the device would see no bus activity for the whole
-    // debounce window. Some devices (e.g. PS4/PS5 auth dongles) drop off the
-    // bus in that time and re-attach, and enumeration is then abandoned at the
-    // debounce check. Reset the port straight away, as TinyUSB 0.17 did; the
-    // regular reset after the debounce still follows.
-    hcd_port_reset(dev0_bus->rhport);
-    osal_task_delay(ENUM_RESET_ROOT_DELAY_MS);
-    hcd_port_reset_end(dev0_bus->rhport);
-  }
-  #endif
   usbh_defer_func_ms_async(ENUM_DEBOUNCING_DELAY_MS, enum_delay_async, ENUM_AFTER_DEBOUNCING_DELAY);
 }
 
